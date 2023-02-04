@@ -37,7 +37,7 @@
                 android:value="" />
         </activity>
         <activity
-            android:name="com.Adipt60.chatapp.MainActivity"
+            android:name="com.Adipt60.chatapp.activities.MainActivity"
             android:exported="true">
             <meta-data
                 android:name="android.app.lib_name"

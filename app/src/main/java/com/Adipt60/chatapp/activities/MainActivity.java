@@ -1,4 +1,4 @@
-package com.Adipt60.chatapp;
+package com.Adipt60.chatapp.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
