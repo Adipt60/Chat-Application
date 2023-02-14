@@ -1,4 +1,4 @@
-package com.Adipt60.chatapp.Utilities;
+package com.Adipt60.chatapp.utilities;
 
 public class Constants {
     public static final String KEY_COLLECTION_USERS = "users";
@@ -10,5 +10,6 @@ public class Constants {
     public static final String KEY_USER_ID = "userId";
     public static final String KEY_IMAGE = "image";
     public static final String KEY_FCM_TOKEN = "fcmToken";
+    public static final String KEY_USER = "user";
 
 }

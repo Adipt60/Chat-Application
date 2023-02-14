@@ -1,4 +1,4 @@
-package com.Adipt60.chatapp.Utilities;
+package com.Adipt60.chatapp.utilities;
 
 import android.content.Context;
 import android.content.SharedPreferences;

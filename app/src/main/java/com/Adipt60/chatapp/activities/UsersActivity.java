@@ -2,12 +2,14 @@ package com.Adipt60.chatapp.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
 
-import com.Adipt60.chatapp.Utilities.Constants;
-import com.Adipt60.chatapp.Utilities.PreferenceManager;
+import com.Adipt60.chatapp.listeners.UserListener;
+import com.Adipt60.chatapp.utilities.Constants;
+import com.Adipt60.chatapp.utilities.PreferenceManager;
 import com.Adipt60.chatapp.adapters.UsersAdapter;
 import com.Adipt60.chatapp.databinding.ActivityUsersBinding;
 import com.Adipt60.chatapp.models.User;
@@ -17,7 +19,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UsersActivity extends AppCompatActivity {
+public class UsersActivity extends AppCompatActivity implements UserListener {
 
     private ActivityUsersBinding binding;
     private PreferenceManager preferenceManager;
@@ -58,7 +60,7 @@ public class UsersActivity extends AppCompatActivity {
                             users.add(user);
                         }
                         if(users.size() > 0){
-                            UsersAdapter usersAdapter = new UsersAdapter(users);
+                            UsersAdapter usersAdapter = new UsersAdapter(users,this);
                             binding.usersRecyclerView.setAdapter(usersAdapter);
                             binding.usersRecyclerView.setVisibility(View.VISIBLE);
                         }
@@ -85,5 +87,13 @@ public class UsersActivity extends AppCompatActivity {
         else{
             binding.progressBar.setVisibility(View.INVISIBLE);
         }
+    }
+
+    @Override
+    public void onUserClicked(User user) {
+        Intent intent = new Intent(getApplicationContext(), ChatActivity.class);
+        intent.putExtra(Constants.KEY_USER,user);
+        startActivity(intent);
+        finish();
     }
 }

@@ -16,8 +16,8 @@ import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
 
-import com.Adipt60.chatapp.Utilities.Constants;
-import com.Adipt60.chatapp.Utilities.PreferenceManager;
+import com.Adipt60.chatapp.utilities.Constants;
+import com.Adipt60.chatapp.utilities.PreferenceManager;
 import com.Adipt60.chatapp.databinding.ActivitySignUpBinding;
 import com.google.firebase.firestore.FirebaseFirestore;
 

@@ -9,15 +9,13 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.widget.Toast;
 
-import com.Adipt60.chatapp.R;
-import com.Adipt60.chatapp.Utilities.Constants;
-import com.Adipt60.chatapp.Utilities.PreferenceManager;
+import com.Adipt60.chatapp.utilities.Constants;
+import com.Adipt60.chatapp.utilities.PreferenceManager;
 import com.Adipt60.chatapp.databinding.ActivityMainBinding;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingService;
 
 import java.util.HashMap;
 
