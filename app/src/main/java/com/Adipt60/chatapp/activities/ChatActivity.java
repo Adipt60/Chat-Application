@@ -1,11 +1,11 @@
 package com.Adipt60.chatapp.activities;
 
-import androidx.appcompat.app.AppCompatActivity;
 
 
+
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
@@ -16,7 +16,6 @@ import com.Adipt60.chatapp.utilities.Constants;
 import com.Adipt60.chatapp.databinding.ActivityChatBinding;
 import com.Adipt60.chatapp.models.User;
 import com.Adipt60.chatapp.utilities.PreferenceManager;
-import com.google.android.gms.common.api.HasApiKey;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
@@ -28,14 +27,13 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.Objects;
 
-public class   ChatActivity extends AppCompatActivity {
+public class   ChatActivity extends BaseActivity {
 
     private ActivityChatBinding binding;
     private User receiverUser;
@@ -44,6 +42,7 @@ public class   ChatActivity extends AppCompatActivity {
     private FirebaseFirestore database;
     private PreferenceManager preferenceManager;
     private String conversionId = null;
+    private Boolean isReceivedAvailable = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +93,30 @@ public class   ChatActivity extends AppCompatActivity {
         binding.inputMessage.setText(null);
     }
 
+    private void listenAvailabilityOfReceiver(){
+        database.collection(Constants.KEY_COLLECTION_USERS).document(
+                receiverUser.id
+        ).addSnapshotListener(ChatActivity.this, (value, error) -> {
+            if(error != null){
+                return;
+            }
+            if(value != null){
+                if(value.getLong(Constants.KEY_AVAILABILITY) != null){
+                    int availability = Objects.requireNonNull(
+                            value.getLong(Constants.KEY_AVAILABILITY)
+                    ).intValue();
+                    isReceivedAvailable = availability == 1;
+                }
+            }
+            if(isReceivedAvailable){
+                binding.textAvailability.setVisibility(View.VISIBLE);
+            }
+            else{
+                binding.textAvailability.setVisibility(View.GONE);
+            }
+        });
+    }
+
     private void listenMessages(){
         database.collection(Constants.KEY_COLLECTION_CHAT)
                 .whereEqualTo(Constants.KEY_SENDER_ID,preferenceManager.getString(Constants.KEY_USER_ID))
@@ -107,6 +130,7 @@ public class   ChatActivity extends AppCompatActivity {
 
 
 
+    @SuppressLint("NotifyDataSetChanged")
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
         if(error != null) {
             return;
@@ -203,4 +227,10 @@ public class   ChatActivity extends AppCompatActivity {
             conversionId = documentSnapshot.getId();
         }
     };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        listenAvailabilityOfReceiver();
+    }
 }
