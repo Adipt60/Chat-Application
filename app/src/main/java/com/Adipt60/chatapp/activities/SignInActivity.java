@@ -1,13 +1,19 @@
 package com.Adipt60.chatapp.activities;
 
+
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
+import android.widget.VideoView;
 
+import com.Adipt60.chatapp.R;
 import com.Adipt60.chatapp.utilities.Constants;
 import com.Adipt60.chatapp.utilities.PreferenceManager;
 import com.Adipt60.chatapp.databinding.ActivitySignInBinding;
@@ -18,7 +24,13 @@ public class SignInActivity extends AppCompatActivity {
 
     private ActivitySignInBinding binding;
     private PreferenceManager preferenceManager;
+    VideoView videoView;
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        videoView.start();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +44,20 @@ public class SignInActivity extends AppCompatActivity {
         binding = ActivitySignInBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         setListeners();
+
+        videoView = binding.videoback;
+
+        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.video4);
+        videoView.setVideoURI(uri);
+
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mp.setLooping(true);
+            }
+        });
+
+        videoView.start();
     }
 
     private void setListeners(){

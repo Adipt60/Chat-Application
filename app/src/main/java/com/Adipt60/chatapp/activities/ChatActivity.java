@@ -9,9 +9,14 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
 import android.view.View;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
 
 import com.Adipt60.chatapp.adapters.ChatAdapter;
 import com.Adipt60.chatapp.models.ChatMessage;
+import com.Adipt60.chatapp.network.ApiClient;
+import com.Adipt60.chatapp.network.ApiService;
 import com.Adipt60.chatapp.utilities.Constants;
 import com.Adipt60.chatapp.databinding.ActivityChatBinding;
 import com.Adipt60.chatapp.models.User;
@@ -24,6 +29,10 @@ import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QuerySnapshot;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +41,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class   ChatActivity extends BaseActivity {
 
@@ -69,28 +82,70 @@ public class   ChatActivity extends BaseActivity {
     }
 
     private void sendMessage(){
-        HashMap<String,Object> message = new HashMap<>();
-        message.put(Constants.KEY_SENDER_ID,preferenceManager.getString(Constants.KEY_USER_ID));
-        message.put(Constants.KEY_RECEIVER_ID,receiverUser.id);
-        message.put(Constants.KEY_MESSAGE,binding.inputMessage.getText().toString());
-        message.put(Constants.KEY_TIMESTAMP, new Date());
-        database.collection(Constants.KEY_COLLECTION_CHAT).add(message);
-        if(conversionId != null){
-            updateConversion(binding.inputMessage.getText().toString());
+        if(!binding.inputMessage.getText().toString().equals("")) {
+            HashMap<String, Object> message = new HashMap<>();
+            message.put(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID));
+            message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
+            message.put(Constants.KEY_MESSAGE, binding.inputMessage.getText().toString());
+            message.put(Constants.KEY_TIMESTAMP, new Date());
+            database.collection(Constants.KEY_COLLECTION_CHAT).add(message);
+            if (conversionId != null) {
+                updateConversion(binding.inputMessage.getText().toString());
+            } else {
+                HashMap<String, Object> conversion = new HashMap<>();
+                conversion.put(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID));
+                conversion.put(Constants.KEY_SENDER_NAME, preferenceManager.getString(Constants.KEY_NAME));
+                conversion.put(Constants.KEY_SENDER_IMAGE, preferenceManager.getString(Constants.KEY_IMAGE));
+                conversion.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
+                conversion.put(Constants.KEY_RECEIVER_NAME, receiverUser.name);
+                conversion.put(Constants.KEY_RECEIVER_IMAGE, receiverUser.image);
+                conversion.put(Constants.KEY_LAST_MESSAGE, binding.inputMessage.getText().toString());
+                conversion.put(Constants.KEY_TIMESTAMP, new Date());
+                addConversion(conversion);
+            }
+
+            binding.inputMessage.setText(null);
         }
-        else{
-            HashMap<String, Object> conversion = new HashMap<>();
-            conversion.put(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID));
-            conversion.put(Constants.KEY_SENDER_NAME, preferenceManager.getString(Constants.KEY_NAME));
-            conversion.put(Constants.KEY_SENDER_IMAGE, preferenceManager.getString(Constants.KEY_IMAGE));
-            conversion.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
-            conversion.put(Constants.KEY_RECEIVER_NAME, receiverUser.name);
-            conversion.put(Constants.KEY_RECEIVER_IMAGE, receiverUser.image);
-            conversion.put(Constants.KEY_LAST_MESSAGE, binding.inputMessage.getText().toString());
-            conversion.put(Constants.KEY_TIMESTAMP, new Date());
-            addConversion(conversion);
-        }
-        binding.inputMessage.setText(null);
+    }
+
+    private void showToast(String message){
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void sendNotification(String messageBody){
+        ApiClient.getClient().create(ApiService.class).sendMessage(
+                Constants.getRemoteMsgHeaders(),
+                messageBody
+        ).enqueue(new Callback<String>() {
+            @Override
+            public void onResponse(@NonNull Call<String> call,@NonNull Response<String> response) {
+                if(response.isSuccessful()){
+                    try {
+                        if(response.body() != null){
+                            JSONObject responseJson = new JSONObject(response.body());
+                            JSONArray results = responseJson.getJSONArray("results");
+                            if(responseJson.getInt("failure") == 1){
+                                JSONObject error = (JSONObject) results.get(0);
+                                showToast(error.getString("error"));
+                                return;
+                            }
+                        }
+
+                    }catch(JSONException e){
+                        e.printStackTrace();
+                    }
+                    showToast("Notification sent successfully");
+                }
+                else {
+                    showToast("Error: " + response.code());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<String> call,@NonNull Throwable t) {
+                showToast(t.getMessage());
+            }
+        });
     }
 
     private void listenAvailabilityOfReceiver(){
@@ -107,6 +162,12 @@ public class   ChatActivity extends BaseActivity {
                     ).intValue();
                     isReceivedAvailable = availability == 1;
                 }
+                receiverUser.token = value.getString(Constants.KEY_FCM_TOKEN);
+                if(receiverUser.image == null){
+                    receiverUser.image = value.getString(Constants.KEY_IMAGE);
+                    chatAdapter.setReceiverProfileImage(getBitmapFromEncodedString(receiverUser.image));
+                    chatAdapter.notifyItemRangeChanged(0,chatMessages.size());
+                }
             }
             if(isReceivedAvailable){
                 binding.textAvailability.setVisibility(View.VISIBLE);
@@ -114,6 +175,7 @@ public class   ChatActivity extends BaseActivity {
             else{
                 binding.textAvailability.setVisibility(View.GONE);
             }
+
         });
     }
 
@@ -130,7 +192,6 @@ public class   ChatActivity extends BaseActivity {
 
 
 
-    @SuppressLint("NotifyDataSetChanged")
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
         if(error != null) {
             return;
@@ -167,8 +228,13 @@ public class   ChatActivity extends BaseActivity {
 
 
     private Bitmap getBitmapFromEncodedString(String encodedImage){
-        byte[] bytes = Base64.decode(encodedImage,Base64.DEFAULT);
-        return BitmapFactory.decodeByteArray(bytes,0, bytes.length);
+        if(encodedImage !=null){
+            byte[] bytes = Base64.decode(encodedImage,Base64.DEFAULT);
+            return BitmapFactory.decodeByteArray(bytes,0, bytes.length);
+        }else{
+            return null;
+        }
+
     }
 
 

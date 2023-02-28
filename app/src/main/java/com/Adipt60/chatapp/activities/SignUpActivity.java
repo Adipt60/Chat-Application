@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -15,7 +16,9 @@ import android.util.Base64;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
+import android.widget.VideoView;
 
+import com.Adipt60.chatapp.R;
 import com.Adipt60.chatapp.utilities.Constants;
 import com.Adipt60.chatapp.utilities.PreferenceManager;
 import com.Adipt60.chatapp.databinding.ActivitySignUpBinding;
@@ -33,6 +36,14 @@ public class SignUpActivity extends AppCompatActivity {
     private PreferenceManager preferenceManager;
     private String encodedImage;
 
+    VideoView videoView;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        videoView.start();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +51,20 @@ public class SignUpActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         preferenceManager = new PreferenceManager(getApplicationContext());
         setListeners();
+
+        videoView = binding.videoback;
+
+        Uri uri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.video4);
+        videoView.setVideoURI(uri);
+
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                mp.setLooping(true);
+            }
+        });
+
+        videoView.start();
     }
 
     private void setListeners() {
@@ -96,6 +121,7 @@ public class SignUpActivity extends AppCompatActivity {
         return Base64.encodeToString(bytes,Base64.DEFAULT);
     }
 
+
     private final ActivityResultLauncher<Intent> pickImage = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -118,7 +144,7 @@ public class SignUpActivity extends AppCompatActivity {
 
     private boolean isValidSignUpDetails(){
         if(encodedImage == null){
-            showToast("Select Profile Picture");
+            showToast("Add Your Image");
             return false;
         }
         else if(binding.inputName.getText().toString().trim().isEmpty()){

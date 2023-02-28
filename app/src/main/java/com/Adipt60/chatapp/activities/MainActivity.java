@@ -49,6 +49,8 @@ public class MainActivity extends BaseActivity implements ConversionListener {
         getToken();
         setListeners();
         listenConversations();
+
+        FirebaseMessaging.getInstance().subscribeToTopic("notification");
     }
 
     private void init(){
@@ -84,7 +86,6 @@ public class MainActivity extends BaseActivity implements ConversionListener {
         binding.imageProfile.setImageBitmap(bitmap);
     }
 
-    @SuppressLint("NotifyDataSetChanged")
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
         if(error != null){
             return;
@@ -135,6 +136,7 @@ public class MainActivity extends BaseActivity implements ConversionListener {
     }
 
     private void updateToken(String token){
+        preferenceManager.putString(Constants.KEY_FCM_TOKEN, token);
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         DocumentReference documentReference =
                 database.collection(Constants.KEY_COLLECTION_USERS).document(
